@@ -1,14 +1,54 @@
-import { STORAGE_NAME, type StorageKey } from "./consts";
+import "..";
+import { STORAGE_NAME } from "./consts";
 import { openAppDB, requestToPromise } from "./util";
 
 class SafeIDB {
-  db: IDBDatabase | null = null;
+  private db: IDBDatabase | null = null;
+  private operations: Symbol[] = [];
 
   constructor() {
     this.db = null;
+    this.operations = [];
   }
 
-  async run<T>(
+  async getItem<T = unknown>(key: string): Promise<T | null> {
+    const value: T = await this.run(`readonly`, (store) =>
+      requestToPromise(store.get(key)),
+    );
+
+    return value ?? null;
+  }
+
+  async setItem<T>(key: string, value: T): Promise<void> {
+    await this.run(`readwrite`, (store) =>
+      requestToPromise(store.put(value, key)),
+    );
+  }
+
+  removeItem(key: string): Promise<void> {
+    return this.run(`readwrite`, (store) =>
+      requestToPromise(store.delete(key)),
+    );
+  }
+
+  clear(): Promise<void> {
+    return this.run(`readwrite`, (store) => requestToPromise(store.clear()));
+  }
+
+  length(): Promise<number> {
+    return this.run(`readonly`, (store) => requestToPromise(store.count()));
+  }
+
+  keys(): Promise<string[]> {
+    return new Promise(async (resolve) => {
+      const keys = await this.run(`readonly`, (store) =>
+        requestToPromise(store.getAllKeys()),
+      );
+      resolve(keys.map((key) => key.toString()));
+    });
+  }
+
+  private async run<T>(
     mode: IDBTransactionMode,
     operation: (store: IDBObjectStore) => Promise<T>,
   ): Promise<T> {
@@ -17,11 +57,11 @@ class SafeIDB {
     const done = new Promise<void>((resolve) => {
       tx.oncomplete = () => resolve();
       tx.onabort = () => {
-        throw tx.error ?? new Error("Transaction aborted");
+        throw tx.error ?? new Error(`Transaction aborted`);
       };
       tx.onerror = () => {
         tx.abort();
-        throw tx.error ?? new Error("Transaction failed");
+        throw tx.error ?? new Error(`Transaction failed`);
       };
     });
 
@@ -40,38 +80,6 @@ class SafeIDB {
       throw error;
     }
   }
-
-  async getItem<T = unknown>(key: StorageKey): Promise<T | null> {
-    const value = await this.run("readonly", (store) =>
-      requestToPromise(store.get(key)),
-    );
-
-    return (value as T) ?? null;
-  }
-
-  async setItem<T>(key: StorageKey, value: T): Promise<void> {
-    await this.run("readwrite", (store) =>
-      requestToPromise(store.put(value, key)),
-    );
-  }
-
-  async removeItem(key: StorageKey): Promise<void> {
-    await this.run("readwrite", (store) => requestToPromise(store.delete(key)));
-  }
-
-  async clear(): Promise<void> {
-    await this.run("readwrite", (store) => requestToPromise(store.clear()));
-  }
-
-  async length(): Promise<number> {
-    return this.run("readonly", (store) => requestToPromise(store.count()));
-  }
-
-  async keys(): Promise<StorageKey[]> {
-    return this.run("readonly", (store) =>
-      requestToPromise(store.getAllKeys()),
-    );
-  }
 }
 
-export const safeidb = new SafeIDB();
+export const safeidb: TSafeIDB = new SafeIDB();

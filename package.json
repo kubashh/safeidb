@@ -1,15 +1,15 @@
 {
   "name": "safeidb",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "scripts": {
     "dev": "bun check && bun test/serve.ts",
     "build": "bun build src/safeidb.ts --outfile=index.js --minify"
   },
   "files": [
-    "./index.js"
+    "./index.js",
+    "./index.d.ts"
   ],
   "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "^7.0.2"
+    "@types/bun": "latest"
   }
 }
