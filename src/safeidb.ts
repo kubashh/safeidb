@@ -4,11 +4,9 @@ import { openAppDB, requestToPromise } from "./util";
 
 class SafeIDB {
   private db: IDBDatabase | null = null;
-  private operations: Symbol[] = [];
 
   constructor() {
     this.db = null;
-    this.operations = [];
   }
 
   async getItem<T = unknown>(key: string): Promise<T | null> {
@@ -46,6 +44,24 @@ class SafeIDB {
       );
       resolve(keys.map((key) => key.toString()));
     });
+  }
+
+  values<T>(): Promise<T[]> {
+    return this.run<T[]>(`readonly`, (store) =>
+      requestToPromise(store.getAll()),
+    );
+  }
+
+  entries<T>(): Promise<[string, T][]> {
+    return new Promise(async (resolve) => {
+      const [keys, values] = await Promise.all([this.keys(), this.values<T>()]);
+
+      resolve(keys.map((key, i) => [key, values[i]!]));
+    });
+  }
+
+  close(): void {
+    this.db?.close();
   }
 
   private async run<T>(

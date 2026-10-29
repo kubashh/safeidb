@@ -5,6 +5,9 @@ type TSafeIDB = {
   clear(): Promise<void>;
   length(): Promise<number>;
   keys(): Promise<string[]>;
+  values<T>(): Promise<T[]>;
+  entries<T>(): Promise<[string, T][]>;
+  close(): void;
 };
 
 declare module "safeidb" {

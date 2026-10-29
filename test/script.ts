@@ -23,6 +23,7 @@ const obj = {
 try {
   await test1();
   await test2();
+  await test3();
 } catch (err) {
   error(err as string);
 }
@@ -92,6 +93,23 @@ async function test2() {
       ``,
     ),
   );
+}
+
+async function test3() {
+  await safeidb.clear();
+
+  await Promise.all([
+    safeidb.setItem(`key1`, [obj]),
+    safeidb.setItem(`key2`, [[obj]]),
+    safeidb.setItem(`key3`, [[[obj]]]),
+    safeidb.setItem(`key4`, { ...obj }),
+    safeidb.setItem(`kfds`, [{ ...obj }]),
+  ]);
+
+  log(`Check console`);
+  console.log(await safeidb.keys());
+  console.log(await safeidb.values());
+  console.log(await safeidb.entries());
 }
 
 //

@@ -30,8 +30,7 @@ export function openAppDB(): Promise<IDBDatabase> {
 
     request.onerror = () => reject(request.error);
 
-    request.onblocked = () => {
-      console.warn("Database upgrade blocked by another connection.");
-    };
+    request.onblocked = () =>
+      console.warn(`Database upgrade blocked by another connection.`);
   });
 }
