@@ -1,13 +1,8 @@
-import "..";
-import { STORAGE_NAME } from "./consts";
+import { STORAGE_NAME, type TSafeIDB } from "./consts";
 import { openAppDB, requestToPromise } from "./util";
 
 class SafeIDB {
   private db: IDBDatabase | null = null;
-
-  constructor() {
-    this.db = null;
-  }
 
   async getItem<T = unknown>(key: string): Promise<T | null> {
     const value: T = await this.run(`readonly`, (store) =>
